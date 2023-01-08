@@ -60,18 +60,14 @@ type Storage struct {
 	Kinds Kinds
 }
 
-func New(path string) (*Storage, error) {
-	db, err := badger.Open(badger.DefaultOptions(path))
-	if err != nil {
-		return nil, err
-	}
+func New(db *badger.DB) *Storage {
 	return &Storage{
 		db: db,
 		Kinds: Kinds{
 			m:  make(map[Kind]Object),
 			m2: make(map[reflect.Type]Kind),
 		},
-	}, nil
+	}
 }
 
 func (s *Storage) TxnRO(fn func(*Transaction) error) error {

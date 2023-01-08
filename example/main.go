@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	badger "github.com/dgraph-io/badger/v3"
 	"github.com/yozel/structdb"
 )
 
@@ -20,22 +21,27 @@ func (s *Storage) User() *structdb.StorageManager[User] {
 	return structdb.NewStorageManager[User](s.Storage)
 }
 
-func NewStorage(s *structdb.Storage) *Storage {
-	ss := &Storage{s}
+func NewStorage(db *badger.DB) (*Storage, error) {
+	ss := &Storage{
+		Storage: structdb.New(db),
+	}
 	err := ss.Kinds.Register("user", User{})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return ss
+	return ss, nil
 }
 
 func main() {
-	s, err := structdb.New("badger.db")
+	db, err := badger.Open(badger.DefaultOptions("badger.db"))
 	if err != nil {
 		panic(err)
 	}
-	defer s.Close()
-	ss := NewStorage(s)
+	ss, err := NewStorage(db)
+	if err != nil {
+		panic(err)
+	}
+	defer ss.Close()
 
 	err = ss.User().Set(User{
 		ObjectType: structdb.ObjectType{
