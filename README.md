@@ -8,58 +8,65 @@ Here's a quick example of how StructDB works:
 package main
 
 import (
-    "fmt"
-    "github.com/structdb/structdb"
+	"fmt"
+
+	"github.com/yozel/structdb"
 )
 
-
 type Storage struct {
-	*storage.Storage
+	*structdb.Storage
 }
 
 type User struct {
-    storage.ObjectType
-    ID   int64
-    Name string
+	structdb.ObjectType
+	Firstname string
+	Lastname  string
 }
 
-func (s *Storage) User() *storage.StorageManager[User] {
-	return storage.NewStorageManager[User](s.Storage)
+func (s *Storage) User() *structdb.StorageManager[User] {
+	return structdb.NewStorageManager[User](s.Storage)
 }
 
-func NewStorage(s *storage.Storage) *Storage {
+func NewStorage(s *structdb.Storage) *Storage {
 	ss := &Storage{s}
-	ss.Kinds.Register(User{})
-    return ss
+	err := ss.Kinds.Register("user", User{})
+	if err != nil {
+		panic(err)
+	}
+	return ss
 }
 
 func main() {
-    s := storage.NewStorage()
-    ss := NewStorage(s)
+	s, err := structdb.New("badger.db")
+	if err != nil {
+		panic(err)
+	}
+	defer s.Close()
+	ss := NewStorage(s)
 
-    ss.User().Set(&User{
-        ID:   1,
-        Name: "John",
-    })
-    ss.TxnRW(func(txn *Transaction) error {
-        u := &User{
-            ID:   1,
-            Name: "John",
-        }
-        err := txn.Put(u)
-        if err != nil {
-            return err
-        }
-        return nil
-    })
-    ss.TxnRW(func(txn *Transaction) error {
-        u := &User{}
-        err := txn.Get(u, 1)
-        if err != nil {
-            return err
-        }
-        fmt.Println(u)
-        return nil
-    })
+	err = ss.User().Set(User{
+		ObjectType: structdb.ObjectType{
+			ObjectMeta: &structdb.ObjectMeta{
+				Name: "jdoe",
+			},
+		},
+		Firstname: "John",
+		Lastname:  "Doe",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	u, err := ss.User().Get("jdoe")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(u.Firstname, u.Lastname)
+
+	err = ss.User().Delete("jdoe")
+	if err != nil {
+		panic(err)
+	}
 }
+
 ```
