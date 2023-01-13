@@ -2,6 +2,7 @@ package structdb
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -29,6 +30,10 @@ func (k *Kinds) Register(vv string, v Object) error {
 	if vv != strings.TrimSpace(strings.ToLower(vv)) {
 		return ErrInvalidKind
 	}
+	t := reflect.TypeOf(v)
+	if t.Kind() == reflect.Ptr {
+		return fmt.Errorf("Kind %s is a pointer, must be a struct", v)
+	}
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.m[Kind(vv)] = v
@@ -36,24 +41,24 @@ func (k *Kinds) Register(vv string, v Object) error {
 	return nil
 }
 
-func (k *Kinds) IsRegistered(kind Kind) bool {
+func (k *Kinds) isRegistered(kind Kind) bool {
 	k.mu.RLock()
 	defer k.mu.RUnlock()
 	_, ok := k.m[kind]
 	return ok
 }
 
-func (k *Kinds) KindToType(kind Kind) (reflect.Type, error) {
+func (k *Kinds) NewObject(kind Kind) (Object, error) {
 	k.mu.RLock()
 	defer k.mu.RUnlock()
 	v, ok := k.m[kind]
 	if !ok {
 		return nil, ErrInvalidKind
 	}
-	return reflect.TypeOf(v), nil
+	return reflect.New(reflect.TypeOf(v)).Interface().(Object), nil
 }
 
-func (k *Kinds) ObjectToKind(v Object) (Kind, error) {
+func (k *Kinds) GetKind(v Object) (Kind, error) {
 	k.mu.RLock()
 	defer k.mu.RUnlock()
 	t := reflect.TypeOf(v)

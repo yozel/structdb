@@ -3,7 +3,6 @@ package structdb
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -22,7 +21,7 @@ func (s *Kinds) JsonToObject(j json.RawMessage) (obj Object, err error) {
 }
 
 func (s *Kinds) jsonToObject(kn KindName, j json.RawMessage) (obj Object, err error) {
-	if !s.IsRegistered(kn.Kind) {
+	if !s.isRegistered(kn.Kind) {
 		return nil, fmt.Errorf("kind %s is not registered", kn.Kind)
 	}
 	j, err = sjson.SetBytes(j, "Metadata.Name", kn.Name)
@@ -33,11 +32,10 @@ func (s *Kinds) jsonToObject(kn KindName, j json.RawMessage) (obj Object, err er
 	if err != nil {
 		return nil, err
 	}
-	t, err := s.KindToType(kn.Kind)
+	obj, err = s.NewObject(kn.Kind)
 	if err != nil {
 		return nil, err
 	}
-	obj = reflect.New(t).Interface().(Object)
 	err = json.Unmarshal(j, &obj)
 	if err != nil {
 		return nil, err

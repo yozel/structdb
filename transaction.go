@@ -22,7 +22,7 @@ type Transaction struct {
 }
 
 func (txn *Transaction) Get(kn KindName) (Object, error) {
-	if !txn.storage.Kinds.IsRegistered(kn.Kind) {
+	if !txn.storage.Kinds.isRegistered(kn.Kind) {
 		return nil, fmt.Errorf("kind %s is not registered", kn.Kind)
 	}
 	it, err := txn.txn.Get(kn.key())
@@ -38,7 +38,7 @@ func (txn *Transaction) Get(kn KindName) (Object, error) {
 
 func (txn *Transaction) List(kn KindName) ([]Object, error) {
 	objects := []Object{}
-	if kn.Kind != "" && !txn.storage.Kinds.IsRegistered(kn.Kind) {
+	if kn.Kind != "" && !txn.storage.Kinds.isRegistered(kn.Kind) {
 		return nil, fmt.Errorf("kind %s is not registered", kn.Kind)
 	}
 
@@ -83,7 +83,7 @@ func (txn *Transaction) Set(obj Object) error {
 }
 
 func (txn *Transaction) Delete(kn KindName) error {
-	if !txn.storage.Kinds.IsRegistered(kn.Kind) {
+	if !txn.storage.Kinds.isRegistered(kn.Kind) {
 		return fmt.Errorf("kind %s is not registered", kn.Kind)
 	}
 	return txn.txn.Delete(kn.key())

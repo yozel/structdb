@@ -32,7 +32,7 @@ func (s *Storage) badgerItemToObject(item *badger.Item) (Object, error) {
 }
 
 func (s *Storage) objectToBadgerEntry(obj Object) (*badger.Entry, error) {
-	kind, err := s.Kinds.ObjectToKind(obj)
+	kind, err := s.Kinds.GetKind(obj)
 	if err != nil {
 		return nil, err
 	}

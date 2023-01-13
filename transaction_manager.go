@@ -38,7 +38,7 @@ func (m TransactionManager[T]) List() ([]T, error) {
 }
 
 func (m TransactionManager[T]) Set(obj T) error {
-	kind, err := m.txn.storage.Kinds.ObjectToKind(obj)
+	kind, err := m.txn.storage.Kinds.GetKind(obj)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (m TransactionManager[T]) Delete(name Name) error {
 }
 
 func (m TransactionManager[T]) getKind() (Kind, error) {
-	return m.txn.storage.Kinds.ObjectToKind((*new(T)))
+	return m.txn.storage.Kinds.GetKind((*new(T)))
 }
 
 func objCast[T any](o Object) *T {
