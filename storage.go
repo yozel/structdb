@@ -125,6 +125,17 @@ func (s *Storage) List(kn KindName) ([]Object, error) {
 	return objs, err
 }
 
+func (s *Storage) GetKindName(obj Object) (*KindName, error) {
+	kind, err := s.Kinds.GetKind(obj)
+	if err != nil {
+		return nil, err
+	}
+	return &KindName{
+		Kind: kind,
+		Name: obj.GetMetadata().Name,
+	}, nil
+}
+
 func (s *Storage) Set(obj Object) error {
 	return s.TxnRW(func(txn *Transaction) error {
 		return txn.Set(obj)
