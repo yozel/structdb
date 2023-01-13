@@ -43,16 +43,28 @@ func (k *Kinds) IsRegistered(kind Kind) bool {
 	return ok
 }
 
-func (k *Kinds) KindToType(kind Kind) reflect.Type {
+func (k *Kinds) KindToType(kind Kind) (reflect.Type, error) {
 	k.mu.RLock()
 	defer k.mu.RUnlock()
-	return reflect.TypeOf(k.m[kind])
+	v, ok := k.m[kind]
+	if !ok {
+		return nil, ErrInvalidKind
+	}
+	return reflect.TypeOf(v), nil
 }
 
-func (k *Kinds) ObjectToKind(v Object) Kind {
+func (k *Kinds) ObjectToKind(v Object) (Kind, error) {
 	k.mu.RLock()
 	defer k.mu.RUnlock()
-	return k.m2[reflect.TypeOf(v)]
+	t := reflect.TypeOf(v)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	kind, ok := k.m2[t]
+	if !ok {
+		return "", ErrInvalidKind
+	}
+	return kind, nil
 }
 
 type Storage struct {

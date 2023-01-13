@@ -33,7 +33,11 @@ func (s *Kinds) jsonToObject(kn KindName, j json.RawMessage) (obj Object, err er
 	if err != nil {
 		return nil, err
 	}
-	obj = reflect.New(s.KindToType(kn.Kind)).Interface().(Object)
+	t, err := s.KindToType(kn.Kind)
+	if err != nil {
+		return nil, err
+	}
+	obj = reflect.New(t).Interface().(Object)
 	err = json.Unmarshal(j, &obj)
 	if err != nil {
 		return nil, err

@@ -32,8 +32,9 @@ func (s *Storage) badgerItemToObject(item *badger.Item) (Object, error) {
 }
 
 func (s *Storage) objectToBadgerEntry(obj Object) (*badger.Entry, error) {
-	if !s.Kinds.IsRegistered(s.Kinds.ObjectToKind(obj)) {
-		return nil, fmt.Errorf("kind %s is not registered", s.Kinds.ObjectToKind(obj))
+	kind, err := s.Kinds.ObjectToKind(obj)
+	if err != nil {
+		return nil, err
 	}
 	if !isAlphaNumeric.MatchString(string(obj.GetMetadata().Name)) {
 		return nil, fmt.Errorf("name must be alphanumeric")
@@ -55,5 +56,5 @@ func (s *Storage) objectToBadgerEntry(obj Object) (*badger.Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	return badger.NewEntry(KindName{Kind: s.Kinds.ObjectToKind(obj), Name: name}.key(), val), nil
+	return badger.NewEntry(KindName{Kind: kind, Name: name}.key(), val), nil
 }

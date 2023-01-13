@@ -14,7 +14,11 @@ func NewTransactionManager[T Object](txn *Transaction) *TransactionManager[T] {
 }
 
 func (m *TransactionManager[T]) Get(name Name) (r *T, err error) {
-	o, err := m.txn.Get(KindName{Kind: m.getKind(), Name: name})
+	kind, err := m.getKind()
+	if err != nil {
+		return nil, err
+	}
+	o, err := m.txn.Get(KindName{Kind: kind, Name: name})
 	if err != nil {
 		return
 	}
@@ -22,7 +26,11 @@ func (m *TransactionManager[T]) Get(name Name) (r *T, err error) {
 }
 
 func (m TransactionManager[T]) List() ([]T, error) {
-	objs, err := m.txn.List(KindName{Kind: m.getKind()})
+	kind, err := m.getKind()
+	if err != nil {
+		return nil, err
+	}
+	objs, err := m.txn.List(KindName{Kind: kind})
 	if err != nil {
 		return nil, err
 	}
@@ -30,17 +38,29 @@ func (m TransactionManager[T]) List() ([]T, error) {
 }
 
 func (m TransactionManager[T]) Set(obj T) error {
-	if m.txn.storage.Kinds.ObjectToKind(obj) != m.getKind() {
-		return fmt.Errorf("object is not of type %s but %s: %+v", m.getKind(), m.txn.storage.Kinds.ObjectToKind(obj), obj)
+	kind, err := m.txn.storage.Kinds.ObjectToKind(obj)
+	if err != nil {
+		return err
+	}
+	kind2, err := m.getKind()
+	if err != nil {
+		return err
+	}
+	if kind != kind2 {
+		return fmt.Errorf("object is not of type %s but %s: %+v", kind2, kind, obj)
 	}
 	return m.txn.Set(obj)
 }
 
 func (m TransactionManager[T]) Delete(name Name) error {
-	return m.txn.Delete(KindName{Kind: m.getKind(), Name: name})
+	kind, err := m.getKind()
+	if err != nil {
+		return err
+	}
+	return m.txn.Delete(KindName{Kind: kind, Name: name})
 }
 
-func (m TransactionManager[T]) getKind() Kind {
+func (m TransactionManager[T]) getKind() (Kind, error) {
 	return m.txn.storage.Kinds.ObjectToKind((*new(T)))
 }
 
